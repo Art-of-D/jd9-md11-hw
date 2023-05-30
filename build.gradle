@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+group 'org.main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.26'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation group: 'com.h2database', name: 'h2', version: '2.1.214'
+    implementation group: 'org.hibernate.orm', name: 'hibernate-core', version: '6.2.3.Final'
+    implementation group: 'org.flywaydb', name: 'flyway-core', version: '9.18.0'
+}
+
+test {
+    useJUnitPlatform()
+}
