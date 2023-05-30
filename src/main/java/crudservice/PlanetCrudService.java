@@ -7,12 +7,13 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class PlanetCrudService {
     private Session connection;
     private Transaction transaction;
     private List<Planet> resultList;
-    private HibernateUtil util = new HibernateUtil().getInstance();
+    private HibernateUtil util = HibernateUtil.getInstance();
 
     public void readAll(){
         try {
@@ -21,13 +22,15 @@ public class PlanetCrudService {
 
             resultList = connection.createQuery("FROM Planet", Planet.class).list();
 
-            connection.getTransaction().commit();
-        } catch (Exception e){
-            if (transaction!=null){
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
                 transaction.rollback();
             }
         } finally {
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
         }
 
         for (Planet planet: resultList) {
@@ -43,51 +46,37 @@ public class PlanetCrudService {
         query.setParameter("id", id);
         resultList = query.list();
 
-        connection.getTransaction().commit();
+        transaction.commit();
         connection.close();
 
-        for (Planet planet: resultList) {
-            System.out.println(planet.getId() + " - " +planet.getName());
-            return planet;
+        if (resultList.isEmpty()) {
+            throw new NoSuchElementException("Planet not found with ID: " + id);
         }
-        return null;
+
+        Planet planet = resultList.get(0);
+        System.out.println(planet.getId() + " - " + planet.getName());
+        return planet;
     }
 
     public void create(String id, String name){
-        String lastIdentifier = null;
-        try {
-            connection = util.getSessionFactory().openSession();
-            transaction = connection.beginTransaction();
-            Query<String> query = connection.createQuery("SELECT id FROM Planet WHERE id = :id", String.class);
-            query.setParameter("id", id);
-            lastIdentifier = query.uniqueResult();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-        } finally {
-            connection.close();
-        }
-
-        if (lastIdentifier == null) {
             Planet planet = Planet.builder().id(id).name(name).build();
 
-            Session connection2 = util.getSessionFactory().openSession();
-            Transaction transaction2 = null;
+            Session connection = util.getSessionFactory().openSession();
+            Transaction transaction = null;
 
             try {
-                transaction2 = connection2.beginTransaction();
-                connection2.save(planet);
-                transaction2.commit();
+                transaction = connection.beginTransaction();
+                connection.persist(planet);
+                transaction.commit();
             } catch (Exception e) {
-                if (transaction2 != null) {
-                    transaction2.rollback();
+                if (transaction != null) {
+                    transaction.rollback();
                 }
             } finally {
-                connection2.close();
+                if (connection != null) {
+                    connection.close();
+                }
             }
-        }
     }
 
     public void delete(String id){
@@ -103,7 +92,9 @@ public class PlanetCrudService {
                 transaction.rollback();
             }
         } finally {
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
         }
     }
 }

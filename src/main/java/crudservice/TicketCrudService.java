@@ -87,19 +87,21 @@ public class TicketCrudService {
                     .planet2(to_planet)
                     .build();
 
-            Session connection2 = util.getSessionFactory().openSession();
-            Transaction transaction2 = null;
+            Session connection = util.getSessionFactory().openSession();
+            Transaction transaction = null;
 
             try {
-                transaction2 = connection2.beginTransaction();
-                connection2.persist(ticket);
-                transaction2.commit();
+                transaction = connection.beginTransaction();
+                connection.persist(ticket);
+                transaction.commit();
             } catch (Exception e) {
-                if (transaction2 != null) {
-                    transaction2.rollback();
+                if (transaction != null) {
+                    transaction.rollback();
                 }
             } finally {
-                connection2.close();
+                if (connection != null) {
+                    connection.close();
+                }
             }
     }
 
@@ -116,7 +118,9 @@ public class TicketCrudService {
                 transaction.rollback();
             }
         } finally {
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
         }
     }
 

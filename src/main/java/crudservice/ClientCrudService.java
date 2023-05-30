@@ -7,6 +7,7 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class ClientCrudService {
     private Session connection;
@@ -45,23 +46,27 @@ public class ClientCrudService {
         query.setParameter("id", number);
         resultList = query.list();
 
-        connection.getTransaction().commit();
+        transaction.commit();
         connection.close();
 
-        for (Client client: resultList) {
-            System.out.println("client - " + client.getId() + " - " + client.getName());
-            return client;
+        if (resultList.isEmpty()) {
+            throw new NoSuchElementException("Client not found with ID: " + number);
         }
-        return null;
+
+        Client client = resultList.get(0);
+        System.out.println("client - " + client.getId() + " - " + client.getName());
+        return client;
     }
 
     public void create(String name){
-        /*Long lastIdentifier = null;
+        Client client = Client.builder().name(name).build();
+
+        Session connection = util.getSessionFactory().openSession();
+        Transaction transaction = null;
+
         try {
-            connection = util.getSessionFactory().openSession();
             transaction = connection.beginTransaction();
-            Query<Long> query = connection.createQuery("SELECT MAX(id) FROM Client", Long.class);
-            lastIdentifier = query.uniqueResult();
+            connection.persist(client);
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {
@@ -71,47 +76,7 @@ public class ClientCrudService {
             if (connection != null) {
                 connection.close();
             }
-        }*/
-        Client client = Client.builder().name(name).build();
-
-        Session connection2 = util.getSessionFactory().openSession();
-        Transaction transaction2 = null;
-
-        try {
-            transaction2 = connection2.beginTransaction();
-            connection2.save(client);
-            transaction2.commit();
-        } catch (Exception e) {
-            if (transaction2 != null) {
-                transaction2.rollback();
-            }
-        } finally {
-            if (connection2 != null) {
-                connection2.close();
-            }
         }
-
-       /*if (lastIdentifier != null) {
-            Long newIdentifier = (lastIdentifier != null) ? lastIdentifier + 1 : 1;
-            Client client = Client.builder().id(newIdentifier).name(name).build();
-
-            Session connection2 = util.getSessionFactory().openSession();
-            Transaction transaction2 = null;
-
-            try {
-                transaction2 = connection2.beginTransaction();
-                connection2.save(client);
-                transaction2.commit();
-            } catch (Exception e) {
-                if (transaction2 != null) {
-                    transaction2.rollback();
-                }
-            } finally {
-                if (connection2 != null) {
-                    connection2.close();
-                }
-            }
-        }*/
     }
 
     public void delete(String name, int number){
